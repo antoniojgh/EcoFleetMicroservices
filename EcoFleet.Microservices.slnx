@@ -1,0 +1,47 @@
+<Solution>
+  <Folder Name="/aspire/" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="EcoFleet.BuildingBlocks.Application/EcoFleet.BuildingBlocks.Application.csproj" />
+    <Project Path="EcoFleet.BuildingBlocks.Contracts/EcoFleet.BuildingBlocks.Contracts.csproj" />
+    <Project Path="EcoFleet.BuildingBlocks.Domain/EcoFleet.BuildingBlocks.Domain.csproj" />
+    <Project Path="EcoFleet.BuildingBlocks.Infrastructure/EcoFleet.BuildingBlocks.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Gateway/" />
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/AssignmentService/">
+    <Project Path="EcoFleet.AssignmentService.API/EcoFleet.AssignmentService.API.csproj" />
+    <Project Path="EcoFleet.AssignmentService.Application/EcoFleet.AssignmentService.Application.csproj" />
+    <Project Path="EcoFleet.AssignmentService.Domain/EcoFleet.AssignmentService.Domain.csproj" />
+    <Project Path="EcoFleet.AssignmentService.Infrastructure/EcoFleet.AssignmentService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/DriverService/">
+    <Project Path="EcoFleet.DriverService.API/EcoFleet.DriverService.API.csproj" />
+    <Project Path="EcoFleet.DriverService.Application/EcoFleet.DriverService.Application.csproj" />
+    <Project Path="EcoFleet.DriverService.Domain/EcoFleet.DriverService.Domain.csproj" />
+    <Project Path="EcoFleet.DriverService.Infrastructure/EcoFleet.DriverService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/FleetService/">
+    <Project Path="EcoFleet.FleetService.API/EcoFleet.FleetService.API.csproj" />
+    <Project Path="EcoFleet.FleetService.Application/EcoFleet.FleetService.Application.csproj" />
+    <Project Path="EcoFleet.FleetService.Domain/EcoFleet.FleetService.Domain.csproj" />
+    <Project Path="EcoFleet.FleetService.Infrastructure/EcoFleet.FleetService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/ManagerService/">
+    <Project Path="EcoFleet.ManagerService.API/EcoFleet.ManagerService.API.csproj" />
+    <Project Path="EcoFleet.ManagerService.Application/EcoFleet.ManagerService.Application.csproj" />
+    <Project Path="EcoFleet.ManagerService.Domain/EcoFleet.ManagerService.Domain.csproj" />
+    <Project Path="EcoFleet.ManagerService.Infrastructure/EcoFleet.ManagerService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/NotificationService/">
+    <Project Path="EcoFleet.NotificationService.API/EcoFleet.NotificationService.API.csproj" />
+    <Project Path="EcoFleet.NotificationService.Application/EcoFleet.NotificationService.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/OrderService/">
+    <Project Path="EcoFleet.OrderService.API/EcoFleet.OrderService.API.csproj" />
+    <Project Path="EcoFleet.OrderService.Application/EcoFleet.OrderService.Application.csproj" />
+    <Project Path="EcoFleet.OrderService.Domain/EcoFleet.OrderService.Domain.csproj" />
+    <Project Path="EcoFleet.OrderService.Infrastructure/EcoFleet.OrderService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>

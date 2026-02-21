@@ -1,0 +1,6 @@
+@EcoFleet.AssignmentService.API_HostAddress = http://localhost:5270
+
+GET {{EcoFleet.AssignmentService.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

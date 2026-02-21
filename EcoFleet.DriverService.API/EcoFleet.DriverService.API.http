@@ -1,0 +1,6 @@
+@EcoFleet.DriverService.API_HostAddress = http://localhost:5072
+
+GET {{EcoFleet.DriverService.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
