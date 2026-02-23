@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<RootNamespace>EcoFleet.BuildingBlocks.Contracts</RootNamespace>
+	<AssemblyName>EcoFleet.BuildingBlocks.Contracts</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
