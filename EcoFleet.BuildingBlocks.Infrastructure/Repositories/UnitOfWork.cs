@@ -1,7 +1,4 @@
 ﻿using System.Text.Json;
-using EcoFleet.Application.Interfaces.Data;
-using EcoFleet.Domain.Common;
-using EcoFleet.Infrastructure.Outbox;
 
 namespace EcoFleet.BuildingBlocks.Infrastructure.Repositories
 {

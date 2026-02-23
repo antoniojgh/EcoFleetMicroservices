@@ -1,5 +1,5 @@
-using EcoFleet.Domain.Common;
-using EcoFleet.Domain.Entities;
+using EcoFleet.BuildingBlocks.Domain;
+using EcoFleet.DriverService.Domain.Entities;
 
 namespace EcoFleet.DriverService.Domain.Events
 {
