@@ -6,4 +6,16 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MassTransit" Version="9.0.1" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Application\EcoFleet.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Domain\EcoFleet.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\EcoFleet.FleetService.Application\EcoFleet.FleetService.Application.csproj" />
+  </ItemGroup>
+
 </Project>
