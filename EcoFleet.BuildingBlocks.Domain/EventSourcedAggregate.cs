@@ -1,4 +1,4 @@
-﻿namespace EcoFleet.BuildingBlocks.Infrastructure.EventSourcing;
+﻿namespace EcoFleet.BuildingBlocks.Domain;
 
 public abstract class EventSourcedAggregate
 {
