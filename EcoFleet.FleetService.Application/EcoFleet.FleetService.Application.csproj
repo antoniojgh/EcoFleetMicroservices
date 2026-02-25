@@ -8,12 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="MassTransit.Abstractions" Version="9.0.1" />
     <PackageReference Include="MediatR" Version="14.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EcoFleet.BuildingBlocks.Application\EcoFleet.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Contracts\EcoFleet.BuildingBlocks.Contracts.csproj" />
     <ProjectReference Include="..\EcoFleet.FleetService.Domain\EcoFleet.FleetService.Domain.csproj" />
   </ItemGroup>
 

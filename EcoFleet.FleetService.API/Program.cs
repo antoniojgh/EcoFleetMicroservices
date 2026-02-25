@@ -1,3 +1,4 @@
+using EcoFleet.FleetService.API.Middlewares;
 using EcoFleet.FleetService.Application;
 using EcoFleet.FleetService.Infrastructure;
 using MassTransit;
@@ -46,6 +47,7 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.MapOpenApi();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
