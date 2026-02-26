@@ -1,10 +1,10 @@
-﻿using EcoFleet.DriverService.Domain.Entities;
+﻿using EcoFleet.DriverService.Domain.Aggregates;
 
-namespace EcoFleet.DriverService.Application.Interfaces
+namespace EcoFleet.DriverService.Application.Interfaces;
+
+public interface IDriverEventStore
 {
-    public interface IDriverEventStore
-    {
-        Task<Driver?> LoadAsync(Guid driverId, CancellationToken cancellationToken = default);
-        Task SaveAsync(Driver driver, CancellationToken cancellationToken = default);
-    }
+    Task<DriverAggregate?> LoadAsync(Guid driverId, CancellationToken cancellationToken = default);
+    Task SaveAsync(DriverAggregate aggregate, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid driverId, CancellationToken cancellationToken = default);
 }

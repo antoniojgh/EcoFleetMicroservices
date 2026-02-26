@@ -1,29 +1,22 @@
-﻿using EcoFleet.BuildingBlocks.Application.Interfaces;
-using EcoFleet.BuildingBlocks.Contracts.IntegrationEvents.VehicleEvents;
+﻿using EcoFleet.BuildingBlocks.Contracts.IntegrationEvents.VehicleEvents;
 using EcoFleet.DriverService.Application.Interfaces;
-using EcoFleet.DriverService.Domain.Entities;
 using MassTransit;
 
 namespace EcoFleet.DriverService.API.Consumers;
 
 /// <summary>
-/// MassTransit consumer that processes VehicleMaintenanceStartedIntegrationEvent published by the FleetService.
-/// Updates the previously assigned driver's state back to Available when their vehicle enters maintenance.
-/// This replaces the monolith's direct driver.UnassignVehicle() cross-aggregate call in MarkForMaintenanceHandler.
+/// MassTransit consumer that processes VehicleMaintenanceStartedIntegrationEvent published by FleetService.
+/// Loads the DriverAggregate from the Marten event store and raises DriverVehicleUnassignedStoreEvent
+/// to set the previously assigned driver back to Available when their vehicle enters maintenance.
 /// </summary>
 public class VehicleMaintenanceStartedConsumer : IConsumer<VehicleMaintenanceStartedIntegrationEvent>
 {
-    private readonly IDriverRepository _driverRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDriverEventStore _eventStore;
     private readonly ILogger<VehicleMaintenanceStartedConsumer> _logger;
 
-    public VehicleMaintenanceStartedConsumer(
-        IDriverRepository driverRepository,
-        IUnitOfWork unitOfWork,
-        ILogger<VehicleMaintenanceStartedConsumer> logger)
+    public VehicleMaintenanceStartedConsumer(IDriverEventStore eventStore, ILogger<VehicleMaintenanceStartedConsumer> logger)
     {
-        _driverRepository = driverRepository;
-        _unitOfWork = unitOfWork;
+        _eventStore = eventStore;
         _logger = logger;
     }
 
@@ -44,13 +37,12 @@ public class VehicleMaintenanceStartedConsumer : IConsumer<VehicleMaintenanceSta
             return;
         }
 
-        var driverId = new DriverId(message.PreviousDriverId.Value);
-        var driver = await _driverRepository.GetByIdAsync(driverId, context.CancellationToken);
+        var driver = await _eventStore.LoadAsync(message.PreviousDriverId.Value, context.CancellationToken);
 
         if (driver is null)
         {
             _logger.LogWarning(
-                "Driver {DriverId} not found while processing VehicleMaintenanceStarted event for vehicle {VehicleId}.",
+                "Driver {DriverId} not found in event store while processing VehicleMaintenanceStarted for vehicle {VehicleId}.",
                 message.PreviousDriverId,
                 message.VehicleId);
             return;
@@ -58,8 +50,7 @@ public class VehicleMaintenanceStartedConsumer : IConsumer<VehicleMaintenanceSta
 
         driver.UnassignVehicle();
 
-        await _driverRepository.Update(driver, context.CancellationToken);
-        await _unitOfWork.SaveChangesAsync(context.CancellationToken);
+        await _eventStore.SaveAsync(driver, context.CancellationToken);
 
         _logger.LogInformation(
             "Driver {DriverId} successfully unassigned after vehicle {VehicleId} entered maintenance. Status set to Available.",

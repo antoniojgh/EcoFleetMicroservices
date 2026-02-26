@@ -1,46 +1,36 @@
 ﻿using EcoFleet.BuildingBlocks.Application.Exceptions;
-using EcoFleet.BuildingBlocks.Application.Interfaces;
 using EcoFleet.DriverService.Application.Interfaces;
-using EcoFleet.DriverService.Domain.Entities;
-using EcoFleet.DriverService.Domain.ValueObjects;
+using EcoFleet.DriverService.Domain.Aggregates;
 using MediatR;
 
 namespace EcoFleet.DriverService.Application.UseCases.Commands.UpdateDriver;
 
 public class UpdateDriverHandler : IRequestHandler<UpdateDriverCommand>
 {
-    private readonly IDriverRepository _driverRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDriverEventStore _eventStore;
 
-    public UpdateDriverHandler(IDriverRepository driverRepository, IUnitOfWork unitOfWork)
+    public UpdateDriverHandler(IDriverEventStore eventStore)
     {
-        _driverRepository = driverRepository;
-        _unitOfWork = unitOfWork;
+        _eventStore = eventStore;
     }
 
     public async Task Handle(UpdateDriverCommand request, CancellationToken cancellationToken)
     {
-        var driverId = new DriverId(request.Id);
-        var driver = await _driverRepository.GetByIdAsync(driverId, cancellationToken);
+        // 1. Load aggregate by replaying its event stream from Marten
+        var driver = await _eventStore.LoadAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(DriverAggregate), request.Id);
 
-        if (driver is null)
-            throw new NotFoundException(nameof(Driver), request.Id);
-
-        var name = FullName.Create(request.FirstName, request.LastName);
-        var license = DriverLicense.Create(request.License);
-        var email = Email.Create(request.Email);
-        var phoneNumber = request.PhoneNumber is not null ? PhoneNumber.Create(request.PhoneNumber) : null;
-
-        driver.UpdateName(name);
-        driver.UpdateLicense(license);
-        driver.UpdateEmail(email);
-        driver.UpdatePhoneNumber(phoneNumber);
+        // 2. Apply profile updates — each raises its corresponding store event internally
+        driver.UpdateName(request.FirstName, request.LastName);
+        driver.UpdateLicense(request.License);
+        driver.UpdateEmail(request.Email);
+        driver.UpdatePhoneNumber(request.PhoneNumber);
         driver.UpdateDateOfBirth(request.DateOfBirth);
 
-        // In a microservice architecture, vehicle assignment/unassignment is coordinated
-        // via integration events rather than direct cross-service calls.
-        // The driver's AssignedVehicleId is updated locally; the FleetService listens
-        // for driver events to keep its own state consistent.
+        // 3. Handle vehicle assignment changes
+        // Vehicle assignment is coordinated asynchronously via integration events
+        // between FleetService and DriverService. Direct assignment here updates the
+        // local driver aggregate state to keep it consistent.
         if (request.AssignedVehicleId.HasValue)
         {
             if (driver.AssignedVehicleId != request.AssignedVehicleId.Value)
@@ -56,6 +46,7 @@ public class UpdateDriverHandler : IRequestHandler<UpdateDriverCommand>
             }
         }
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // 4. Append all uncommitted events to the Marten event stream
+        await _eventStore.SaveAsync(driver, cancellationToken);
     }
 }

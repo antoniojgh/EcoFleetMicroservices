@@ -1,14 +1,14 @@
 ﻿using EcoFleet.DriverService.Application.Interfaces;
-using EcoFleet.DriverService.Domain.Entities;
+using EcoFleet.DriverService.Domain.Aggregates;
 using Marten;
 using Microsoft.Extensions.Logging;
 
 namespace EcoFleet.DriverService.Infrastructure.EventStore;
 
 /// <summary>
-/// Marten-based event store repository for the Driver aggregate.
-/// Stores driver state changes as a sequence of events in PostgreSQL via Marten,
-/// enabling event sourcing and full audit trails.
+/// Marten-based event store repository for the DriverAggregate.
+/// Loads aggregate state by replaying events from PostgreSQL and appends
+/// new uncommitted events to the stream on save.
 /// </summary>
 public class DriverEventStoreRepository : IDriverEventStore
 {
@@ -22,45 +22,60 @@ public class DriverEventStoreRepository : IDriverEventStore
     }
 
     /// <summary>
-    /// Loads the Driver aggregate by replaying all events from its stream.
-    /// Returns null if no events exist for the given driver ID.
+    /// Loads the DriverAggregate by replaying all events from its stream.
+    /// Returns null if no event stream exists for the given driver ID.
     /// </summary>
-    public async Task<Driver?> LoadAsync(Guid driverId, CancellationToken cancellationToken = default)
+    public async Task<DriverAggregate?> LoadAsync(Guid driverId, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Loading driver aggregate from event store. DriverId: {DriverId}", driverId);
+        _logger.LogDebug("Loading DriverAggregate from event store. DriverId: {DriverId}", driverId);
 
-        var driver = await _session.Events.AggregateStreamAsync<Driver>(driverId, token: cancellationToken);
+        var aggregate = await _session.Events.AggregateStreamAsync<DriverAggregate>(driverId, token: cancellationToken);
 
-        if (driver is null)
+        if (aggregate is null)
         {
             _logger.LogDebug("No event stream found for driver {DriverId}.", driverId);
         }
 
-        return driver;
+        return aggregate;
     }
 
     /// <summary>
-    /// Persists uncommitted domain events for the Driver aggregate to the Marten event store.
-    /// Events are appended to the driver's event stream and cleared after saving.
+    /// Appends all uncommitted events from the DriverAggregate to its Marten event stream.
+    /// Works for both new streams (first save after Create) and existing streams (subsequent saves).
     /// </summary>
-    public async Task SaveAsync(Driver driver, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(DriverAggregate aggregate, CancellationToken cancellationToken = default)
     {
-        if (!driver.DomainEvents.Any())
+        if (!aggregate.UncommittedEvents.Any())
         {
-            _logger.LogDebug("No uncommitted events for driver {DriverId}. Skipping save.", driver.Id.Value);
+            _logger.LogDebug("No uncommitted events for driver {DriverId}. Skipping save.", aggregate.Id);
             return;
         }
 
         _logger.LogDebug(
             "Appending {Count} event(s) to stream for driver {DriverId}.",
-            driver.DomainEvents.Count,
-            driver.Id.Value);
+            aggregate.UncommittedEvents.Count,
+            aggregate.Id);
 
-        _session.Events.Append(driver.Id.Value, driver.DomainEvents.ToArray());
+        _session.Events.Append(aggregate.Id, aggregate.UncommittedEvents.ToArray());
         await _session.SaveChangesAsync(cancellationToken);
 
-        driver.ClearDomainEvents();
+        aggregate.ClearUncommittedEvents();
 
-        _logger.LogDebug("Events saved for driver {DriverId}.", driver.Id.Value);
+        _logger.LogDebug("Events saved for driver {DriverId}.", aggregate.Id);
+    }
+
+    /// <summary>
+    /// Archives the driver's event stream in Marten.
+    /// The events are preserved for audit purposes but the stream is marked as deleted.
+    /// The DriverReadModel projection is automatically removed by Marten on archive.
+    /// </summary>
+    public async Task DeleteAsync(Guid driverId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Archiving event stream for driver {DriverId}.", driverId);
+
+        _session.Events.ArchiveStream(driverId);
+        await _session.SaveChangesAsync(cancellationToken);
+
+        _logger.LogDebug("Event stream archived for driver {DriverId}.", driverId);
     }
 }

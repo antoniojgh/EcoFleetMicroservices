@@ -1,8 +1,6 @@
-﻿using EcoFleet.BuildingBlocks.Application.Interfaces;
-using EcoFleet.BuildingBlocks.Contracts.IntegrationEvents.DriverEvents;
+﻿using EcoFleet.BuildingBlocks.Contracts.IntegrationEvents.DriverEvents;
 using EcoFleet.DriverService.Application.Interfaces;
-using EcoFleet.DriverService.Domain.Entities;
-using EcoFleet.DriverService.Domain.ValueObjects;
+using EcoFleet.DriverService.Domain.Aggregates;
 using MassTransit;
 using MediatR;
 
@@ -10,56 +8,49 @@ namespace EcoFleet.DriverService.Application.UseCases.Commands.CreateDriver;
 
 public class CreateDriverHandler : IRequestHandler<CreateDriverCommand, Guid>
 {
-    private readonly IDriverRepository _driverRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDriverEventStore _eventStore;
     private readonly IPublishEndpoint _publishEndpoint;
 
-    public CreateDriverHandler(
-        IDriverRepository driverRepository,
-        IUnitOfWork unitOfWork,
-        IPublishEndpoint publishEndpoint)
+    public CreateDriverHandler(IDriverEventStore eventStore, IPublishEndpoint publishEndpoint)
     {
-        _driverRepository = driverRepository;
-        _unitOfWork = unitOfWork;
+        _eventStore = eventStore;
         _publishEndpoint = publishEndpoint;
     }
 
     public async Task<Guid> Handle(CreateDriverCommand request, CancellationToken cancellationToken)
     {
-        var name = FullName.Create(request.FirstName, request.LastName);
-        var license = DriverLicense.Create(request.License);
-        var email = Email.Create(request.Email);
-        var phoneNumber = request.PhoneNumber is not null ? PhoneNumber.Create(request.PhoneNumber) : null;
+        // 1. Create the aggregate via factory method — raises DriverCreatedStoreEvent internally
+        var aggregate = DriverAggregate.Create(
+            request.FirstName,
+            request.LastName,
+            request.License,
+            request.Email,
+            request.PhoneNumber,
+            request.DateOfBirth);
 
-        Driver driver;
-
+        // 2. If a vehicle is being assigned at creation time, raise DriverVehicleAssignedStoreEvent
         if (request.AssignedVehicleId.HasValue)
         {
-            // In a microservice, vehicle validation is handled asynchronously via integration events.
-            // The driver is created as OnDuty with the vehicle reference stored as a primitive Guid.
-            driver = new Driver(name, license, email, request.AssignedVehicleId.Value, phoneNumber, request.DateOfBirth);
-        }
-        else
-        {
-            driver = new Driver(name, license, email, phoneNumber, request.DateOfBirth);
+            aggregate.AssignVehicle(request.AssignedVehicleId.Value);
         }
 
-        await _driverRepository.AddAsync(driver, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // 3. Append all uncommitted events to the Marten event stream
+        await _eventStore.SaveAsync(aggregate, cancellationToken);
 
-        // Publish Integration Event to notify other services that a driver was created
+        // 4. Publish Integration Event to notify other microservices
         await _publishEndpoint.Publish(new DriverCreatedIntegrationEvent
         {
-            DriverId = driver.Id.Value,
-            FirstName = driver.Name.FirstName,
-            LastName = driver.Name.LastName,
-            License = driver.License.Value,
-            Email = driver.Email.Value,
-            PhoneNumber = driver.PhoneNumber?.Value,
-            DateOfBirth = driver.DateOfBirth,
+            DriverId = aggregate.Id,
+            FirstName = aggregate.FirstName,
+            LastName = aggregate.LastName,
+            License = aggregate.License,
+            Email = aggregate.Email,
+            PhoneNumber = aggregate.PhoneNumber,
+            DateOfBirth = aggregate.DateOfBirth,
+            Status = aggregate.Status.ToString(),
             OccurredOn = DateTime.UtcNow
         }, cancellationToken);
 
-        return driver.Id.Value;
+        return aggregate.Id;
     }
 }

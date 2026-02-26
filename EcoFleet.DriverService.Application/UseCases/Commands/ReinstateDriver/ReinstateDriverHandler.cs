@@ -1,8 +1,7 @@
 ﻿using EcoFleet.BuildingBlocks.Application.Exceptions;
-using EcoFleet.BuildingBlocks.Application.Interfaces;
 using EcoFleet.BuildingBlocks.Contracts.IntegrationEvents.DriverEvents;
 using EcoFleet.DriverService.Application.Interfaces;
-using EcoFleet.DriverService.Domain.Entities;
+using EcoFleet.DriverService.Domain.Aggregates;
 using MassTransit;
 using MediatR;
 
@@ -10,42 +9,34 @@ namespace EcoFleet.DriverService.Application.UseCases.Commands.ReinstateDriver;
 
 public class ReinstateDriverHandler : IRequestHandler<ReinstateDriverCommand>
 {
-    private readonly IDriverRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDriverEventStore _eventStore;
     private readonly IPublishEndpoint _publishEndpoint;
 
-    public ReinstateDriverHandler(
-        IDriverRepository repository,
-        IUnitOfWork unitOfWork,
-        IPublishEndpoint publishEndpoint)
+    public ReinstateDriverHandler(IDriverEventStore eventStore, IPublishEndpoint publishEndpoint)
     {
-        _repository = repository;
-        _unitOfWork = unitOfWork;
+        _eventStore = eventStore;
         _publishEndpoint = publishEndpoint;
     }
 
     public async Task Handle(ReinstateDriverCommand request, CancellationToken ct)
     {
-        var driverId = new DriverId(request.Id);
-        var driver = await _repository.GetByIdAsync(driverId, ct);
+        // 1. Load aggregate by replaying its event stream from Marten
+        var driver = await _eventStore.LoadAsync(request.Id, ct)
+            ?? throw new NotFoundException(nameof(DriverAggregate), request.Id);
 
-        if (driver is null)
-        {
-            throw new NotFoundException(nameof(Driver), request.Id);
-        }
+        // 2. Execute domain logic — raises DriverReinstatedStoreEvent internally
+        driver.Reinstate();
 
-        driver.Reinstate(); // Raises internal DriverReinstatedEvent
+        // 3. Append the new event to the Marten event stream
+        await _eventStore.SaveAsync(driver, ct);
 
-        await _repository.Update(driver, ct);
-        await _unitOfWork.SaveChangesAsync(ct); // Saves + creates outbox message
-
-        // Publish Integration Event to RabbitMQ (for other services)
+        // 4. Publish Integration Event to RabbitMQ for other microservices
         await _publishEndpoint.Publish(new DriverReinstatedIntegrationEvent
         {
-            DriverId = driver.Id.Value,
-            FirstName = driver.Name.FirstName,
-            LastName = driver.Name.LastName,
-            Email = driver.Email.Value,
+            DriverId = driver.Id,
+            FirstName = driver.FirstName,
+            LastName = driver.LastName,
+            Email = driver.Email,
             OccurredOn = DateTime.UtcNow
         }, ct);
     }

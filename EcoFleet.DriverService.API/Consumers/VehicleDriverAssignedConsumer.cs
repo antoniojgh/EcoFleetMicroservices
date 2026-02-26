@@ -1,28 +1,22 @@
-﻿using EcoFleet.BuildingBlocks.Application.Interfaces;
-using EcoFleet.BuildingBlocks.Contracts.IntegrationEvents.VehicleEvents;
+﻿using EcoFleet.BuildingBlocks.Contracts.IntegrationEvents.VehicleEvents;
 using EcoFleet.DriverService.Application.Interfaces;
-using EcoFleet.DriverService.Domain.Entities;
 using MassTransit;
 
 namespace EcoFleet.DriverService.API.Consumers;
 
 /// <summary>
-/// MassTransit consumer that processes VehicleDriverAssignedIntegrationEvent published by the FleetService.
-/// Updates the driver's AssignedVehicleId when a vehicle is assigned to them.
+/// MassTransit consumer that processes VehicleDriverAssignedIntegrationEvent published by FleetService.
+/// Loads the DriverAggregate from the Marten event store and raises DriverVehicleAssignedStoreEvent
+/// to keep the driver's state consistent with the vehicle assignment in FleetService.
 /// </summary>
 public class VehicleDriverAssignedConsumer : IConsumer<VehicleDriverAssignedIntegrationEvent>
 {
-    private readonly IDriverRepository _driverRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDriverEventStore _eventStore;
     private readonly ILogger<VehicleDriverAssignedConsumer> _logger;
 
-    public VehicleDriverAssignedConsumer(
-        IDriverRepository driverRepository,
-        IUnitOfWork unitOfWork,
-        ILogger<VehicleDriverAssignedConsumer> logger)
+    public VehicleDriverAssignedConsumer(IDriverEventStore eventStore, ILogger<VehicleDriverAssignedConsumer> logger)
     {
-        _driverRepository = driverRepository;
-        _unitOfWork = unitOfWork;
+        _eventStore = eventStore;
         _logger = logger;
     }
 
@@ -35,13 +29,12 @@ public class VehicleDriverAssignedConsumer : IConsumer<VehicleDriverAssignedInte
             message.VehicleId,
             message.DriverId);
 
-        var driverId = new DriverId(message.DriverId);
-        var driver = await _driverRepository.GetByIdAsync(driverId, context.CancellationToken);
+        var driver = await _eventStore.LoadAsync(message.DriverId, context.CancellationToken);
 
         if (driver is null)
         {
             _logger.LogWarning(
-                "Driver {DriverId} not found while processing VehicleDriverAssigned event for vehicle {VehicleId}.",
+                "Driver {DriverId} not found in event store while processing VehicleDriverAssigned for vehicle {VehicleId}.",
                 message.DriverId,
                 message.VehicleId);
             return;
@@ -49,8 +42,7 @@ public class VehicleDriverAssignedConsumer : IConsumer<VehicleDriverAssignedInte
 
         driver.AssignVehicle(message.VehicleId);
 
-        await _driverRepository.Update(driver, context.CancellationToken);
-        await _unitOfWork.SaveChangesAsync(context.CancellationToken);
+        await _eventStore.SaveAsync(driver, context.CancellationToken);
 
         _logger.LogInformation(
             "Driver {DriverId} successfully assigned to vehicle {VehicleId}.",

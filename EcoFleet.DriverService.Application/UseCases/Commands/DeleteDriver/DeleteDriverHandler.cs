@@ -1,7 +1,6 @@
 ﻿using EcoFleet.BuildingBlocks.Application.Exceptions;
-using EcoFleet.BuildingBlocks.Application.Interfaces;
 using EcoFleet.DriverService.Application.Interfaces;
-using EcoFleet.DriverService.Domain.Entities;
+using EcoFleet.DriverService.Domain.Aggregates;
 using EcoFleet.DriverService.Domain.Enums;
 using MediatR;
 
@@ -9,31 +8,26 @@ namespace EcoFleet.DriverService.Application.UseCases.Commands.DeleteDriver;
 
 public class DeleteDriverHandler : IRequestHandler<DeleteDriverCommand>
 {
-    private readonly IDriverRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDriverEventStore _eventStore;
 
-    public DeleteDriverHandler(IDriverRepository repository, IUnitOfWork unitOfWork)
+    public DeleteDriverHandler(IDriverEventStore eventStore)
     {
-        _repository = repository;
-        _unitOfWork = unitOfWork;
+        _eventStore = eventStore;
     }
 
     public async Task Handle(DeleteDriverCommand request, CancellationToken cancellationToken)
     {
-        var driverId = new DriverId(request.Id);
-        var driver = await _repository.GetByIdAsync(driverId, cancellationToken);
+        // 1. Load aggregate by replaying its event stream from Marten
+        var driver = await _eventStore.LoadAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(DriverAggregate), request.Id);
 
-        if (driver is null)
-        {
-            throw new NotFoundException(nameof(Driver), request.Id);
-        }
-
+        // 2. Enforce business rule: OnDuty drivers cannot be deleted
         if (driver.Status == DriverStatus.OnDuty)
         {
             throw new BusinessRuleException("Cannot delete a driver who is currently on duty. Unassign them first.");
         }
 
-        await _repository.Delete(driver, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // 3. Archive the event stream — events are preserved for audit, read model is removed
+        await _eventStore.DeleteAsync(request.Id, cancellationToken);
     }
 }

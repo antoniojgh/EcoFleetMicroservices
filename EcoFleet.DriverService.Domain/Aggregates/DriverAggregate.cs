@@ -49,6 +49,26 @@ public class DriverAggregate : EventSourcedAggregate
         RaiseEvent(new DriverNameUpdatedStoreEvent(Id, firstName, lastName, DateTime.UtcNow));
     }
 
+    public void UpdateLicense(string license)
+    {
+        RaiseEvent(new DriverLicenseUpdatedStoreEvent(Id, license, DateTime.UtcNow));
+    }
+
+    public void UpdateEmail(string email)
+    {
+        RaiseEvent(new DriverEmailUpdatedStoreEvent(Id, email, DateTime.UtcNow));
+    }
+
+    public void UpdatePhoneNumber(string? phoneNumber)
+    {
+        RaiseEvent(new DriverPhoneNumberUpdatedStoreEvent(Id, phoneNumber, DateTime.UtcNow));
+    }
+
+    public void UpdateDateOfBirth(DateTime? dateOfBirth)
+    {
+        RaiseEvent(new DriverDateOfBirthUpdatedStoreEvent(Id, dateOfBirth, DateTime.UtcNow));
+    }
+
     public void AssignVehicle(Guid vehicleId)
     {
         if (Status == DriverStatus.Suspended)
@@ -102,6 +122,22 @@ public class DriverAggregate : EventSourcedAggregate
             case DriverNameUpdatedStoreEvent e:
                 FirstName = e.FirstName;
                 LastName = e.LastName;
+                break;
+
+            case DriverLicenseUpdatedStoreEvent e:
+                License = e.License;
+                break;
+
+            case DriverEmailUpdatedStoreEvent e:
+                Email = e.Email;
+                break;
+
+            case DriverPhoneNumberUpdatedStoreEvent e:
+                PhoneNumber = e.PhoneNumber;
+                break;
+
+            case DriverDateOfBirthUpdatedStoreEvent e:
+                DateOfBirth = e.DateOfBirth;
                 break;
 
             case DriverVehicleAssignedStoreEvent e:

@@ -26,6 +26,30 @@ namespace EcoFleet.DriverService.Infrastructure.Projections
             model.UpdatedAt = @event.UpdatedAt;
         }
 
+        public void Apply(DriverLicenseUpdatedStoreEvent @event, DriverReadModel model)
+        {
+            model.License = @event.License;
+            model.UpdatedAt = @event.UpdatedAt;
+        }
+
+        public void Apply(DriverEmailUpdatedStoreEvent @event, DriverReadModel model)
+        {
+            model.Email = @event.Email;
+            model.UpdatedAt = @event.UpdatedAt;
+        }
+
+        public void Apply(DriverPhoneNumberUpdatedStoreEvent @event, DriverReadModel model)
+        {
+            model.PhoneNumber = @event.PhoneNumber;
+            model.UpdatedAt = @event.UpdatedAt;
+        }
+
+        public void Apply(DriverDateOfBirthUpdatedStoreEvent @event, DriverReadModel model)
+        {
+            model.DateOfBirth = @event.DateOfBirth;
+            model.UpdatedAt = @event.UpdatedAt;
+        }
+
         public void Apply(DriverSuspendedStoreEvent @event, DriverReadModel model)
         {
             model.Status = DriverStatus.Suspended.ToString();
