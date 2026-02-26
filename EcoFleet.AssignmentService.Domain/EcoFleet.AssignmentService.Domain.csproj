@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Domain\EcoFleet.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

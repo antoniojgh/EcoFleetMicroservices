@@ -1,14 +1,21 @@
+using EcoFleet.AssignmentService.API.Middlewares;
+using EcoFleet.AssignmentService.Application;
+using EcoFleet.AssignmentService.Infrastructure;
 using MassTransit;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 1. Serilog
+builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// 2. Application Layer (MediatR + FluentValidation)
+builder.Services.AddAssignmentApplication();
 
-// 5. MassTransit + RabbitMQ
+// 3. Infrastructure Layer (EF Core + own database)
+builder.Services.AddAssignmentInfrastructure(builder.Configuration);
+
+// 4. MassTransit + RabbitMQ
 builder.Services.AddMassTransit(x =>
 {
     x.SetKebabCaseEndpointNameFormatter();
@@ -19,22 +26,29 @@ builder.Services.AddMassTransit(x =>
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ"));
+
+        // Enable retries with incremental backoff
+        cfg.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
+
         cfg.ConfigureEndpoints(context);
     });
 });
 
+// 5. API Services
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
+
+// 6. Health Checks
+builder.Services.AddHealthChecks()
+    .AddSqlServer(builder.Configuration.GetConnectionString("AssignmentDb")!);
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+app.MapOpenApi();
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

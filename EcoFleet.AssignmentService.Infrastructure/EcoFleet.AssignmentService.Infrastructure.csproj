@@ -6,4 +6,16 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Application\EcoFleet.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Domain\EcoFleet.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\EcoFleet.AssignmentService.Application\EcoFleet.AssignmentService.Application.csproj" />
+  </ItemGroup>
+
 </Project>
