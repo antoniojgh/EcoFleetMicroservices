@@ -6,4 +6,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Application\EcoFleet.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\EcoFleet.ManagerService.Domain\EcoFleet.ManagerService.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
