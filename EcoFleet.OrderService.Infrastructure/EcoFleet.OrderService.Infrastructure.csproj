@@ -6,4 +6,16 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Marten" Version="8.22.0" />
+    <PackageReference Include="MassTransit" Version="9.0.1" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Application\EcoFleet.BuildingBlocks.Application.csproj" />
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Domain\EcoFleet.BuildingBlocks.Domain.csproj" />
+    <ProjectReference Include="..\EcoFleet.OrderService.Application\EcoFleet.OrderService.Application.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -4,15 +4,22 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="9.0.0" />
+    <PackageReference Include="Marten" Version="8.22.0" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="9.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\EcoFleet.BuildingBlocks.Contracts\EcoFleet.BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="..\EcoFleet.OrderService.Application\EcoFleet.OrderService.Application.csproj" />
+    <ProjectReference Include="..\EcoFleet.OrderService.Infrastructure\EcoFleet.OrderService.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

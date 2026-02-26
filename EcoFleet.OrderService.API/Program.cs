@@ -1,12 +1,33 @@
+using EcoFleet.OrderService.API.Middlewares;
+using EcoFleet.OrderService.Application;
+using EcoFleet.OrderService.Infrastructure;
+using EcoFleet.OrderService.Infrastructure.Projections;
+using JasperFx.Events.Projections;
+using Marten;
+using Marten.Events.Projections;
 using MassTransit;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 1. Serilog
+builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// 2. Application Layer (MediatR + FluentValidation)
+builder.Services.AddOrderApplication();
+
+// 3. Infrastructure Layer (Event Store + Read Repository)
+builder.Services.AddOrderInfrastructure();
+
+// 4. Marten Event Store (PostgreSQL)
+builder.Services.AddMarten(sp =>
+{
+    var options = new StoreOptions();
+    options.Connection(builder.Configuration.GetConnectionString("EventStore")!);
+    options.DatabaseSchemaName = "order_events";
+    options.Projections.Add<OrderReadModelProjection>(ProjectionLifecycle.Inline);
+    return options;
+}).UseLightweightSessions();
 
 // 5. MassTransit + RabbitMQ
 builder.Services.AddMassTransit(x =>
@@ -19,22 +40,28 @@ builder.Services.AddMassTransit(x =>
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ"));
+
+        // Enable retries with incremental backoff
+        cfg.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
+
         cfg.ConfigureEndpoints(context);
     });
 });
 
+// 6. API Services
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
+
+// 7. Health Checks
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+app.MapOpenApi();
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
