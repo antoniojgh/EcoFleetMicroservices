@@ -40,7 +40,8 @@ builder.Services.AddOpenApi();
 
 // 6. Health Checks
 builder.Services.AddHealthChecks()
-    .AddSqlServer(builder.Configuration.GetConnectionString("AssignmentDb")!);
+    .AddSqlServer(builder.Configuration.GetConnectionString("AssignmentDb")!)
+    .AddRabbitMQ(builder.Configuration.GetConnectionString("RabbitMQ")!);
 
 var app = builder.Build();
 
