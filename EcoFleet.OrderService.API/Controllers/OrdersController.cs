@@ -113,19 +113,14 @@ public class OrdersController : ControllerBase
     /// Publishes OrderCancelledIntegrationEvent to notify other microservices.
     /// </summary>
     /// <param name="id">The unique identifier of the order to cancel.</param>
-    /// <param name="command">Optional cancellation reason.</param>
+    /// <param name="request">Optional cancellation reason.</param>
     [HttpPatch("cancel/{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public async Task<IActionResult> CancelOrder(Guid id, [FromBody] CancelOrderCommand command)
+    public async Task<IActionResult> CancelOrder(Guid id, [FromBody] CancelOrderRequest request)
     {
-        if (id != command.Id)
-        {
-            return BadRequest("The ID in the URL does not match the ID in the body.");
-        }
-
-        await _sender.Send(command);
+        await _sender.Send(new CancelOrderCommand(id, request.CancellationReason));
 
         return NoContent();
     }

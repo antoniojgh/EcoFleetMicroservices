@@ -53,7 +53,9 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // 7. Health Checks
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("EventStore")!, name: "postgres")
+    .AddRabbitMQ(builder.Configuration.GetConnectionString("RabbitMQ")!, name: "rabbitmq");
 
 var app = builder.Build();
 

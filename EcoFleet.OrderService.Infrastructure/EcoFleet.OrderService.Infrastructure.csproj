@@ -8,8 +8,6 @@
 
   <ItemGroup>
     <PackageReference Include="Marten" Version="8.22.0" />
-    <PackageReference Include="MassTransit" Version="9.0.1" />
-    <PackageReference Include="MediatR" Version="14.0.0" />
   </ItemGroup>
 
   <ItemGroup>
