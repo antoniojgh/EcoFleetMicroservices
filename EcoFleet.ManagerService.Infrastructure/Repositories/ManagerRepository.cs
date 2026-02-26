@@ -50,6 +50,22 @@ public class ManagerRepository : IManagerRepository
 
     public async Task<IEnumerable<Manager>> GetFilteredAsync(FilterManagerDTO filterManagerDTO, CancellationToken cancellationToken = default)
     {
+        var queryable = BuildFilterQuery(filterManagerDTO);
+
+        return await queryable
+            .OrderBy(x => x.Id)
+            .Skip((filterManagerDTO.Page - 1) * filterManagerDTO.RecordsByPage)
+            .Take(filterManagerDTO.RecordsByPage)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> GetFilteredCountAsync(FilterManagerDTO filterManagerDTO, CancellationToken cancellationToken = default)
+    {
+        return await BuildFilterQuery(filterManagerDTO).CountAsync(cancellationToken);
+    }
+
+    private IQueryable<Manager> BuildFilterQuery(FilterManagerDTO filterManagerDTO)
+    {
         var queryable = _context.Managers.AsQueryable();
 
         if (filterManagerDTO.Id is not null)
@@ -59,14 +75,10 @@ public class ManagerRepository : IManagerRepository
         }
 
         if (filterManagerDTO.FirstName is not null)
-        {
             queryable = queryable.Where(x => x.Name.FirstName.Contains(filterManagerDTO.FirstName));
-        }
 
         if (filterManagerDTO.LastName is not null)
-        {
             queryable = queryable.Where(x => x.Name.LastName.Contains(filterManagerDTO.LastName));
-        }
 
         if (filterManagerDTO.Email is not null)
         {
@@ -75,10 +87,6 @@ public class ManagerRepository : IManagerRepository
                 queryable = queryable.Where(x => x.Email == email);
         }
 
-        return await queryable
-            .OrderBy(x => x.Id)
-            .Skip((filterManagerDTO.Page - 1) * filterManagerDTO.RecordsByPage)
-            .Take(filterManagerDTO.RecordsByPage)
-            .ToListAsync(cancellationToken);
+        return queryable;
     }
 }

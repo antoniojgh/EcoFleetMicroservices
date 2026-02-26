@@ -8,8 +8,8 @@ public class Manager : Entity<ManagerId>, IAggregateRoot
     public FullName Name { get; private set; }
     public Email Email { get; private set; }
 
-    // Constructor for EF Core
-    private Manager() : base(new ManagerId(Guid.NewGuid()))
+    // Constructor for EF Core (Id will be overwritten by the configured column mapping)
+    private Manager() : base(new ManagerId(Guid.Empty))
     { }
 
     public Manager(FullName name, Email email)
