@@ -1,5 +1,7 @@
 <Solution>
-  <Folder Name="/aspire/" />
+  <Folder Name="/aspire/">
+    <Project Path="EcoFleet.AppHost/EcoFleet.AppHost.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="EcoFleet.BuildingBlocks.Application/EcoFleet.BuildingBlocks.Application.csproj" />
