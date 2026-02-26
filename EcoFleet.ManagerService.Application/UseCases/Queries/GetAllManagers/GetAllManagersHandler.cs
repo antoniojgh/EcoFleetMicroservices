@@ -16,16 +16,13 @@ public class GetAllManagersHandler : IRequestHandler<GetAllManagersQuery, Pagina
 
     public async Task<PaginatedDTO<ManagerDetailDTO>> Handle(GetAllManagersQuery request, CancellationToken cancellationToken)
     {
+        var totalCount = await _repository.GetFilteredCountAsync(request, cancellationToken);
         var managersFiltered = await _repository.GetFilteredAsync(request, cancellationToken);
 
-        var managersFilteredDTO = managersFiltered.Select(ManagerDetailDTO.FromEntity);
-
-        var paginatedResult = new PaginatedDTO<ManagerDetailDTO>
+        return new PaginatedDTO<ManagerDetailDTO>
         {
-            Items = managersFilteredDTO,
-            TotalCount = managersFilteredDTO.Count()
+            Items = managersFiltered.Select(ManagerDetailDTO.FromEntity),
+            TotalCount = totalCount
         };
-
-        return paginatedResult;
     }
 }

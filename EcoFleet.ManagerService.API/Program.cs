@@ -1,7 +1,6 @@
 using EcoFleet.ManagerService.API.Middlewares;
 using EcoFleet.ManagerService.Application;
 using EcoFleet.ManagerService.Infrastructure;
-using MassTransit;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,23 +14,11 @@ builder.Services.AddManagerApplication();
 // 3. Infrastructure Layer (EF Core + own database)
 builder.Services.AddManagerInfrastructure(builder.Configuration);
 
-// 4. MassTransit + RabbitMQ (registered for outbox processing, no consumers needed)
-builder.Services.AddMassTransit(x =>
-{
-    x.SetKebabCaseEndpointNameFormatter();
-
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ"));
-        cfg.ConfigureEndpoints(context);
-    });
-});
-
-// 5. API Services
+// 4. API Services
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// 6. Health Checks
+// 5. Health Checks
 builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("ManagerDb")!);
 

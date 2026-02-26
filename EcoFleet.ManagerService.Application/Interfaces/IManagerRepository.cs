@@ -7,4 +7,5 @@ namespace EcoFleet.ManagerService.Application.Interfaces;
 public interface IManagerRepository : IRepository<Manager, ManagerId>
 {
     Task<IEnumerable<Manager>> GetFilteredAsync(FilterManagerDTO filterManagerDTO, CancellationToken cancellationToken = default);
+    Task<int> GetFilteredCountAsync(FilterManagerDTO filterManagerDTO, CancellationToken cancellationToken = default);
 }

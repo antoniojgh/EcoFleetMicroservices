@@ -1,6 +1,5 @@
 using EcoFleet.BuildingBlocks.Application.Interfaces;
 using EcoFleet.ManagerService.Application.Interfaces;
-using EcoFleet.ManagerService.Infrastructure.Outbox;
 using EcoFleet.ManagerService.Infrastructure.Persistence;
 using EcoFleet.ManagerService.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +23,6 @@ public static class DependencyInjection
 
         // 3. Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-        // 4. Register Outbox Processor (Background Worker)
-        services.AddHostedService<OutboxProcessor>();
 
         return services;
     }
