@@ -1,7 +1,6 @@
 ﻿using EcoFleet.BuildingBlocks.Application.Exceptions;
-using EcoFleet.BuildingBlocks.Application.Interfaces;
 using EcoFleet.FleetService.Application.Interfaces;
-using EcoFleet.FleetService.Domain.Entities;
+using EcoFleet.FleetService.Domain.Aggregates;
 using EcoFleet.FleetService.Domain.Enums;
 using MediatR;
 
@@ -9,25 +8,24 @@ namespace EcoFleet.FleetService.Application.UseCases.Commands.DeleteVehicle;
 
 public class DeleteVehicleHandler : IRequestHandler<DeleteVehicleCommand>
 {
-    private readonly IVehicleRepository _vehicleRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IVehicleEventStore _eventStore;
 
-    public DeleteVehicleHandler(IVehicleRepository vehicleRepository, IUnitOfWork unitOfWork)
+    public DeleteVehicleHandler(IVehicleEventStore eventStore)
     {
-        _vehicleRepository = vehicleRepository;
-        _unitOfWork = unitOfWork;
+        _eventStore = eventStore;
     }
 
     public async Task Handle(DeleteVehicleCommand request, CancellationToken cancellationToken)
     {
-        var vehicleId = new VehicleId(request.Id);
-        var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId, cancellationToken)
-            ?? throw new NotFoundException(nameof(Vehicle), request.Id);
+        // 1. Load aggregate by replaying its event stream from Marten
+        var vehicle = await _eventStore.LoadAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException(nameof(VehicleAggregate), request.Id);
 
+        // 2. Enforce business rule: Active vehicles cannot be deleted
         if (vehicle.Status == VehicleStatus.Active)
             throw new BusinessRuleException("Cannot delete a vehicle that is currently active. Unassign the driver first.");
 
-        await _vehicleRepository.Delete(vehicle, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        // 3. Archive the event stream — events are preserved for audit, read model is removed
+        await _eventStore.DeleteAsync(request.Id, cancellationToken);
     }
 }

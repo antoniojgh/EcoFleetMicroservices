@@ -1,6 +1,10 @@
 using EcoFleet.FleetService.API.Middlewares;
 using EcoFleet.FleetService.Application;
 using EcoFleet.FleetService.Infrastructure;
+using EcoFleet.FleetService.Infrastructure.Projections;
+using JasperFx.Events.Projections;
+using Marten;
+using Marten.Events.Projections;
 using MassTransit;
 using Serilog;
 
@@ -15,9 +19,17 @@ builder.Services.AddFleetApplication();
 // 3. Infrastructure Layer (EF Core + own database)
 builder.Services.AddFleetInfrastructure(builder.Configuration);
 
-// Add services to the container.
+// 4. Marten Event Store (PostgreSQL)
+builder.Services.AddMarten(sp =>
+{
+    var options = new StoreOptions();
+    options.Connection(builder.Configuration.GetConnectionString("EventStore")!);
+    options.DatabaseSchemaName = "fleet_events";
+    options.Projections.Add<VehicleReadModelProjection>(ProjectionLifecycle.Inline);
+    return options;
+}).UseLightweightSessions();
 
-// 4. MassTransit + RabbitMQ
+// 5. MassTransit + RabbitMQ
 builder.Services.AddMassTransit(x =>
 {
     x.SetKebabCaseEndpointNameFormatter();
@@ -36,14 +48,13 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-// 5. API Services
+// 6. API Services
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// 6. Health Checks
+// 7. Health Checks
 builder.Services.AddHealthChecks()
-    .AddSqlServer(builder.Configuration.GetConnectionString("FleetDb")!)
-    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMQ")!);
+    .AddSqlServer(builder.Configuration.GetConnectionString("FleetDb")!);
 
 var app = builder.Build();
 

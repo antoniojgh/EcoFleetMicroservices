@@ -1,5 +1,6 @@
 ﻿using EcoFleet.BuildingBlocks.Application.Interfaces;
 using EcoFleet.FleetService.Application.Interfaces;
+using EcoFleet.FleetService.Infrastructure.EventStore;
 using EcoFleet.FleetService.Infrastructure.Outbox;
 using EcoFleet.FleetService.Infrastructure.Persistence;
 using EcoFleet.FleetService.Infrastructure.Repositories;
@@ -22,10 +23,13 @@ public static class DependencyInjection
         // 2. Register Vehicle Repository
         services.AddScoped<IVehicleRepository, VehicleRepository>();
 
-        // 3. Register Unit of Work
+        // 3. Register Vehicle Event Store Repository (Marten-based)
+        services.AddScoped<IVehicleEventStore, VehicleEventStoreRepository>();
+
+        // 4. Register Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // 4. Register Outbox Processor (Background Worker)
+        // 5. Register Outbox Processor (Background Worker)
         services.AddHostedService<OutboxProcessor>();
 
         return services;
