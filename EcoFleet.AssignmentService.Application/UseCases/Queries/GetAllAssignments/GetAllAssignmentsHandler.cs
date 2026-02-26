@@ -16,14 +16,15 @@ public class GetAllAssignmentsHandler : IRequestHandler<GetAllAssignmentsQuery, 
 
     public async Task<PaginatedDTO<AssignmentDetailDTO>> Handle(GetAllAssignmentsQuery request, CancellationToken cancellationToken)
     {
-        var assignmentsFiltered = await _repository.GetFilteredAsync(request, cancellationToken);
+        var itemsTask = _repository.GetFilteredAsync(request, cancellationToken);
+        var countTask = _repository.GetFilteredCountAsync(request, cancellationToken);
 
-        var assignmentsFilteredDTO = assignmentsFiltered.Select(AssignmentDetailDTO.FromEntity);
+        await Task.WhenAll(itemsTask, countTask);
 
         var paginatedResult = new PaginatedDTO<AssignmentDetailDTO>
         {
-            Items = assignmentsFilteredDTO,
-            TotalCount = assignmentsFilteredDTO.Count()
+            Items = itemsTask.Result.Select(AssignmentDetailDTO.FromEntity),
+            TotalCount = countTask.Result
         };
 
         return paginatedResult;

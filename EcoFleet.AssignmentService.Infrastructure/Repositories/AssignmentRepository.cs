@@ -56,6 +56,20 @@ public class AssignmentRepository : IAssignmentRepository
 
     public async Task<IEnumerable<ManagerDriverAssignment>> GetFilteredAsync(FilterAssignmentDTO filter, CancellationToken cancellationToken = default)
     {
+        return await BuildFilteredQuery(filter)
+            .OrderBy(x => x.Id)
+            .Skip((filter.Page - 1) * filter.RecordsByPage)
+            .Take(filter.RecordsByPage)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> GetFilteredCountAsync(FilterAssignmentDTO filter, CancellationToken cancellationToken = default)
+    {
+        return await BuildFilteredQuery(filter).CountAsync(cancellationToken);
+    }
+
+    private IQueryable<ManagerDriverAssignment> BuildFilteredQuery(FilterAssignmentDTO filter)
+    {
         var queryable = _context.Assignments.AsQueryable();
 
         if (filter.Id is not null)
@@ -79,10 +93,6 @@ public class AssignmentRepository : IAssignmentRepository
             queryable = queryable.Where(x => x.IsActive == filter.IsActive.Value);
         }
 
-        return await queryable
-            .OrderBy(x => x.Id)
-            .Skip((filter.Page - 1) * filter.RecordsByPage)
-            .Take(filter.RecordsByPage)
-            .ToListAsync(cancellationToken);
+        return queryable;
     }
 }

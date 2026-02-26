@@ -72,7 +72,7 @@ public class ManagerDriverAssignmentsController : ControllerBase
     {
         var assignmentId = await _sender.Send(command);
 
-        return CreatedAtAction(nameof(CreateAssignment), new { id = assignmentId }, assignmentId);
+        return CreatedAtAction(nameof(GetAssignmentById), new { id = assignmentId }, assignmentId);
     }
 
     /// <summary>

@@ -39,34 +39,45 @@ public class DriverSuspendedConsumer : IConsumer<DriverSuspendedIntegrationEvent
             message.DriverId);
 
         // Find all active assignments for the suspended driver
-        var activeAssignments = await _repository.GetActiveByDriverIdAsync(
-            message.DriverId, context.CancellationToken);
+        var activeAssignments = (await _repository.GetActiveByDriverIdAsync(
+            message.DriverId, context.CancellationToken)).ToList();
+
+        // Collect the events to publish BEFORE writing to the DB, but publish only AFTER
+        // SaveChangesAsync succeeds. This prevents orphaned integration events when the
+        // DB write fails partway through.
+        var eventsToPublish = new List<AssignmentDeactivatedIntegrationEvent>();
 
         foreach (var assignment in activeAssignments)
         {
             assignment.Deactivate();
             await _repository.Update(assignment, context.CancellationToken);
 
-            // Publish deactivation integration event
-            await _publishEndpoint.Publish(new AssignmentDeactivatedIntegrationEvent
+            eventsToPublish.Add(new AssignmentDeactivatedIntegrationEvent
             {
                 AssignmentId = assignment.Id.Value,
                 ManagerId = assignment.ManagerId,
                 DriverId = assignment.DriverId,
                 OccurredOn = DateTime.UtcNow
-            }, context.CancellationToken);
+            });
+        }
+
+        // Persist all deactivations atomically first
+        await _unitOfWork.SaveChangesAsync(context.CancellationToken);
+
+        // Only publish integration events once the DB write has committed
+        foreach (var @event in eventsToPublish)
+        {
+            await _publishEndpoint.Publish(@event, context.CancellationToken);
 
             _logger.LogInformation(
                 "Deactivated assignment {AssignmentId} for suspended driver {DriverId}.",
-                assignment.Id.Value,
+                @event.AssignmentId,
                 message.DriverId);
         }
-
-        await _unitOfWork.SaveChangesAsync(context.CancellationToken);
 
         _logger.LogInformation(
             "Finished processing DriverSuspended for driver {DriverId}. {Count} assignment(s) deactivated.",
             message.DriverId,
-            activeAssignments.Count());
+            activeAssignments.Count);
     }
 }

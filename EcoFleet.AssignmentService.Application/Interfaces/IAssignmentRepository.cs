@@ -16,4 +16,10 @@ public interface IAssignmentRepository : IRepository<ManagerDriverAssignment, Ma
     /// Returns a filtered and paginated list of assignments.
     /// </summary>
     Task<IEnumerable<ManagerDriverAssignment>> GetFilteredAsync(FilterAssignmentDTO filter, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the total number of assignments matching the filter criteria (before pagination).
+    /// Used alongside GetFilteredAsync to populate PaginatedDTO.TotalCount correctly.
+    /// </summary>
+    Task<int> GetFilteredCountAsync(FilterAssignmentDTO filter, CancellationToken cancellationToken = default);
 }
