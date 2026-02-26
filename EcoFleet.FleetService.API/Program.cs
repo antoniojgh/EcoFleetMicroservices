@@ -20,13 +20,11 @@ builder.Services.AddFleetApplication();
 builder.Services.AddFleetInfrastructure(builder.Configuration);
 
 // 4. Marten Event Store (PostgreSQL)
-builder.Services.AddMarten(sp =>
+builder.Services.AddMarten(options =>
 {
-    var options = new StoreOptions();
     options.Connection(builder.Configuration.GetConnectionString("EventStore")!);
     options.DatabaseSchemaName = "fleet_events";
     options.Projections.Add<VehicleReadModelProjection>(ProjectionLifecycle.Inline);
-    return options;
 }).UseLightweightSessions();
 
 // 5. MassTransit + RabbitMQ
@@ -54,7 +52,8 @@ builder.Services.AddOpenApi();
 
 // 7. Health Checks
 builder.Services.AddHealthChecks()
-    .AddSqlServer(builder.Configuration.GetConnectionString("FleetDb")!);
+    .AddSqlServer(builder.Configuration.GetConnectionString("FleetDb")!)
+    .AddRabbitMQ(builder.Configuration.GetConnectionString("RabbitMQ")!);
 
 var app = builder.Build();
 
