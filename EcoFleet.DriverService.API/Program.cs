@@ -1,7 +1,10 @@
 using EcoFleet.DriverService.API.Middlewares;
 using EcoFleet.DriverService.Application;
 using EcoFleet.DriverService.Infrastructure;
+using EcoFleet.DriverService.Infrastructure.Projections;
+using JasperFx.Events.Projections;
 using Marten;
+using Marten.Events.Projections;
 using MassTransit;
 using Serilog;
 
@@ -22,6 +25,7 @@ builder.Services.AddMarten(options =>
 {
     options.Connection(builder.Configuration.GetConnectionString("EventStore")!);
     options.DatabaseSchemaName = "driver_events";
+    options.Projections.Add<DriverReadModelProjection>(ProjectionLifecycle.Inline);
 }).UseLightweightSessions();
 
 // 5. MassTransit + RabbitMQ
