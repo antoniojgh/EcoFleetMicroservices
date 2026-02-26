@@ -6,4 +6,5 @@ public interface INotificationsService
 {
     Task SendDriverSuspendedNotification(DriverSuspendedEventDTO eventDTO);
     Task SendDriverReinstatedNotification(DriverReinstatedEventDTO eventDTO);
+    Task SendOrderCompletedNotification(OrderCompletedEventDTO eventDTO);
 }

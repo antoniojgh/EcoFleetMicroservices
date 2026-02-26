@@ -45,6 +45,22 @@ public class NotificationsService : INotificationsService
         await SendMessage(eventDTO.Email, subject, body);
     }
 
+    public Task SendOrderCompletedNotification(OrderCompletedEventDTO eventDTO)
+    {
+        // OrderCompletedIntegrationEvent carries OrderId, DriverId, and Price
+        // but does not include driver email. This notification is logged for audit
+        // purposes and can be extended to send emails when the event is enriched
+        // with recipient contact information or via an HTTP call to DriverService.
+        _logger.LogInformation(
+            "Delivery confirmation — Order {OrderId} completed by driver {DriverId}. Price: {Price:C}. CompletedAt: {CompletedAt}",
+            eventDTO.OrderId,
+            eventDTO.DriverId,
+            eventDTO.Price,
+            eventDTO.CompletedAt);
+
+        return Task.CompletedTask;
+    }
+
     private async Task SendMessage(string recipientEmail, string subject, string body)
     {
         _logger.LogInformation("Preparing to send email to {Recipient}. Subject: {Subject}", recipientEmail, subject);
