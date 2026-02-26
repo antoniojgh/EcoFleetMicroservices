@@ -1,6 +1,4 @@
-﻿using EcoFleet.FleetService.Domain.Entities;
-using EcoFleet.FleetService.Domain.ValueObjects;
-using EcoFleet.FleetService.Infrastructure.Outbox;
+﻿using EcoFleet.FleetService.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
