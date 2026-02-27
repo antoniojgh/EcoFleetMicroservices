@@ -22,6 +22,9 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Guid>
         // 1. Create the aggregate via factory method — raises OrderCreatedStoreEvent internally
         var aggregate = OrderAggregate.Create(
             request.DriverId,
+            request.DriverFirstName,
+            request.DriverLastName,
+            request.DriverEmail,
             request.PickUpLatitude,
             request.PickUpLongitude,
             request.DropOffLatitude,

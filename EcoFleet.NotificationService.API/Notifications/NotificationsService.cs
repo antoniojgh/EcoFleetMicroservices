@@ -45,20 +45,25 @@ public class NotificationsService : INotificationsService
         await SendMessage(eventDTO.Email, subject, body);
     }
 
-    public Task SendOrderCompletedNotification(OrderCompletedEventDTO eventDTO)
+    public async Task SendOrderCompletedNotification(OrderCompletedEventDTO eventDTO)
     {
-        // OrderCompletedIntegrationEvent carries OrderId, DriverId, and Price
-        // but does not include driver email. This notification is logged for audit
-        // purposes and can be extended to send emails when the event is enriched
-        // with recipient contact information or via an HTTP call to DriverService.
-        _logger.LogInformation(
-            "Delivery confirmation — Order {OrderId} completed by driver {DriverId}. Price: {Price:C}. CompletedAt: {CompletedAt}",
-            eventDTO.OrderId,
-            eventDTO.DriverId,
-            eventDTO.Price,
-            eventDTO.CompletedAt);
+        var subject = "Order completed — delivery confirmation";
 
-        return Task.CompletedTask;
+        var body = $"""
+        Dear {eventDTO.DriverFirstName} {eventDTO.DriverLastName},
+
+        Your delivery has been completed successfully.
+
+        Order ID: {eventDTO.OrderId}
+        Price: {eventDTO.Price:C}
+        Completed at: {eventDTO.CompletedAt:f}
+
+        Thank you for your service!
+
+        EcoFleet Team
+        """;
+
+        await SendMessage(eventDTO.DriverEmail, subject, body);
     }
 
     private async Task SendMessage(string recipientEmail, string subject, string body)
@@ -72,12 +77,12 @@ public class NotificationsService : INotificationsService
             var host = _configuration.GetValue<string>("EMAIL_CONFIGURATIONS:HOST");
             var port = _configuration.GetValue<int>("EMAIL_CONFIGURATIONS:PORT");
 
-            var smtpClient = new SmtpClient(host, port);
+            using var smtpClient = new SmtpClient(host, port);
             smtpClient.EnableSsl = true;
             smtpClient.UseDefaultCredentials = false;
             smtpClient.Credentials = new NetworkCredential(ourEmail, password);
 
-            var message = new MailMessage(ourEmail!, recipientEmail, subject, body);
+            using var message = new MailMessage(ourEmail!, recipientEmail, subject, body);
             await smtpClient.SendMailAsync(message);
 
             _logger.LogInformation("Email sent successfully to {Recipient}", recipientEmail);

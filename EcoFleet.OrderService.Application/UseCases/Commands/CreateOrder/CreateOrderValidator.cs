@@ -9,6 +9,16 @@ public class CreateOrderValidator : AbstractValidator<CreateOrderCommand>
         RuleFor(x => x.DriverId)
             .NotEmpty().WithMessage("Driver Id is required.");
 
+        RuleFor(x => x.DriverFirstName)
+            .NotEmpty().WithMessage("Driver first name is required.");
+
+        RuleFor(x => x.DriverLastName)
+            .NotEmpty().WithMessage("Driver last name is required.");
+
+        RuleFor(x => x.DriverEmail)
+            .NotEmpty().WithMessage("Driver email is required.")
+            .EmailAddress().WithMessage("Driver email must be a valid email address.");
+
         RuleFor(x => x.PickUpLatitude)
             .InclusiveBetween(-90, 90).WithMessage("PickUp Latitude must be between -90 and 90.");
 

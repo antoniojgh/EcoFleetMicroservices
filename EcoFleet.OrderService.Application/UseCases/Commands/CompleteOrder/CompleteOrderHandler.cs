@@ -35,6 +35,9 @@ public class CompleteOrderHandler : IRequestHandler<CompleteOrderCommand>
         {
             OrderId = order.Id,
             DriverId = order.DriverId,
+            DriverFirstName = order.DriverFirstName,
+            DriverLastName = order.DriverLastName,
+            DriverEmail = order.DriverEmail,
             Price = order.Price,
             CompletedAt = DateTime.UtcNow,
             OccurredOn = DateTime.UtcNow

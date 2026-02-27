@@ -32,6 +32,9 @@ public class OrderCompletedConsumer : IConsumer<OrderCompletedIntegrationEvent>
         {
             OrderId = msg.OrderId,
             DriverId = msg.DriverId,
+            DriverFirstName = msg.DriverFirstName,
+            DriverLastName = msg.DriverLastName,
+            DriverEmail = msg.DriverEmail,
             Price = msg.Price,
             CompletedAt = msg.CompletedAt
         });

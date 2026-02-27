@@ -30,7 +30,8 @@ builder.Services.AddMassTransit(x =>
 });
 
 // 4. Health Checks
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMQ")!);
 
 var app = builder.Build();
 

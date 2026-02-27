@@ -8,6 +8,9 @@ namespace EcoFleet.OrderService.Domain.Aggregates;
 public class OrderAggregate : EventSourcedAggregate
 {
     public Guid DriverId { get; private set; }
+    public string DriverFirstName { get; private set; } = string.Empty;
+    public string DriverLastName { get; private set; } = string.Empty;
+    public string DriverEmail { get; private set; } = string.Empty;
     public OrderStatus Status { get; private set; }
     public double PickUpLatitude { get; private set; }
     public double PickUpLongitude { get; private set; }
@@ -24,6 +27,9 @@ public class OrderAggregate : EventSourcedAggregate
 
     public static OrderAggregate Create(
         Guid driverId,
+        string driverFirstName,
+        string driverLastName,
+        string driverEmail,
         double pickUpLatitude,
         double pickUpLongitude,
         double dropOffLatitude,
@@ -34,6 +40,9 @@ public class OrderAggregate : EventSourcedAggregate
         aggregate.RaiseEvent(new OrderCreatedStoreEvent(
             Guid.NewGuid(),
             driverId,
+            driverFirstName,
+            driverLastName,
+            driverEmail,
             pickUpLatitude,
             pickUpLongitude,
             dropOffLatitude,
@@ -82,6 +91,9 @@ public class OrderAggregate : EventSourcedAggregate
             case OrderCreatedStoreEvent e:
                 Id = e.OrderId;
                 DriverId = e.DriverId;
+                DriverFirstName = e.DriverFirstName;
+                DriverLastName = e.DriverLastName;
+                DriverEmail = e.DriverEmail;
                 PickUpLatitude = e.PickUpLatitude;
                 PickUpLongitude = e.PickUpLongitude;
                 DropOffLatitude = e.DropOffLatitude;
