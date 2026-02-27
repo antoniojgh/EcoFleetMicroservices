@@ -1,7 +1,10 @@
 using System.Text.Json;
+using EcoFleet.BuildingBlocks.Domain;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace EcoFleet.BuildingBlocks.Infrastructure.Outbox;
 
@@ -42,7 +45,7 @@ public class OutboxProcessor : BackgroundService
     private async Task ProcessOutboxMessagesAsync(CancellationToken stoppingToken)
     {
         using var scope = _scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
         var publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
 
         // Use an explicit transaction so UPDLOCK is held until commit
@@ -50,7 +53,7 @@ public class OutboxProcessor : BackgroundService
 
         // UPDLOCK: locks selected rows so other replicas cannot pick them up
         // READPAST: other replicas skip locked rows instead of waiting (no blocking)
-        var messages = await dbContext.OutboxMessages
+        var messages = await dbContext.Set<OutboxMessage>()
             .FromSqlRaw(
                 """
                 SELECT TOP ({0}) *

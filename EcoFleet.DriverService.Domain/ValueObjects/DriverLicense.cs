@@ -1,5 +1,5 @@
-using EcoFleet.Domain.Common;
-using EcoFleet.Domain.Exceptions;
+using EcoFleet.BuildingBlocks.Domain;
+using EcoFleet.BuildingBlocks.Domain.Exceptions;
 
 namespace EcoFleet.DriverService.Domain.ValueObjects
 {

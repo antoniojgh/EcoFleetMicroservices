@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using EcoFleet.Application.Exceptions;
+using EcoFleet.BuildingBlocks.Application.Exceptions;
 
 namespace EcoFleet.BuildingBlocks.Application.Behaviors;
 

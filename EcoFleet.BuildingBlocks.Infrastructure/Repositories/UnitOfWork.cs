@@ -1,12 +1,16 @@
-﻿using System.Text.Json;
+using System.Text.Json;
+using EcoFleet.BuildingBlocks.Application.Interfaces;
+using EcoFleet.BuildingBlocks.Domain;
+using EcoFleet.BuildingBlocks.Infrastructure.Outbox;
+using Microsoft.EntityFrameworkCore;
 
 namespace EcoFleet.BuildingBlocks.Infrastructure.Repositories
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly DbContext _dbContext;
 
-        public UnitOfWork(ApplicationDbContext dbContext)
+        public UnitOfWork(DbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -49,7 +53,7 @@ namespace EcoFleet.BuildingBlocks.Infrastructure.Repositories
                 Error = null
             });
 
-            _dbContext.OutboxMessages.AddRange(outboxMessages);
+            _dbContext.Set<OutboxMessage>().AddRange(outboxMessages);
         }
     }
 }

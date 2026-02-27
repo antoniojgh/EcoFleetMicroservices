@@ -1,6 +1,5 @@
-﻿using EcoFleet.Application.Interfaces.Data;
-using EcoFleet.Domain.Common;
-using EcoFleet.Domain.Entities;
+using EcoFleet.BuildingBlocks.Application.Interfaces;
+using EcoFleet.BuildingBlocks.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcoFleet.BuildingBlocks.Infrastructure.Repositories
@@ -8,9 +7,9 @@ namespace EcoFleet.BuildingBlocks.Infrastructure.Repositories
     public class Repository<T, TId> : IRepository<T, TId> where T : Entity<TId>, IAggregateRoot
                                                           where TId : notnull
     {
-        private readonly ApplicationDbContext _context;
+        private readonly DbContext _context;
 
-        public Repository(ApplicationDbContext context)
+        public Repository(DbContext context)
         {
             _context = context;
         }
