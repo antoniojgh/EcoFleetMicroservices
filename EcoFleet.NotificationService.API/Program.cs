@@ -1,5 +1,6 @@
 using EcoFleet.NotificationService.API.Notifications;
 using MassTransit;
+using RabbitMQ.Client;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,7 +32,10 @@ builder.Services.AddMassTransit(x =>
 
 // 4. Health Checks
 builder.Services.AddHealthChecks()
-    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMQ")!);
+    .AddRabbitMQ(sp => new ConnectionFactory
+    {
+        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!)
+    }.CreateConnectionAsync().GetAwaiter().GetResult());
 
 var app = builder.Build();
 

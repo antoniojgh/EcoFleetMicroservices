@@ -6,6 +6,7 @@ using JasperFx.Events.Projections;
 using Marten;
 using Marten.Events.Projections;
 using MassTransit;
+using RabbitMQ.Client;
 using Serilog;
 
 
@@ -50,7 +51,10 @@ builder.Services.AddOpenApi();
 // 7. Health Checks
 builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("DriverDb")!)
-    .AddRabbitMQ(builder.Configuration.GetConnectionString("RabbitMQ")!);
+    .AddRabbitMQ(sp => new ConnectionFactory
+    {
+        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!)
+    }.CreateConnectionAsync().GetAwaiter().GetResult());
 
 var app = builder.Build();
 

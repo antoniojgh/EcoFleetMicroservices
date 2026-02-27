@@ -4,7 +4,7 @@ using Marten.Events.Aggregation;
 
 namespace EcoFleet.DriverService.Infrastructure.Projections
 {
-    public class DriverReadModelProjection : SingleStreamProjection<DriverReadModel>
+    public class DriverReadModelProjection : SingleStreamProjection<DriverReadModel, Guid>
     {
         public DriverReadModel Create(DriverCreatedStoreEvent @event) => new()
         {

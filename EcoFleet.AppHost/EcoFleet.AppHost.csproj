@@ -15,13 +15,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EcoFleet.DriverService.API\EcoFleet.DriverService.API.csproj" />
-    <ProjectReference Include="..\EcoFleet.FleetService.API\EcoFleet.FleetService.API.csproj" />
-    <ProjectReference Include="..\EcoFleet.ManagerService.API\EcoFleet.ManagerService.API.csproj" />
-    <ProjectReference Include="..\EcoFleet.OrderService.API\EcoFleet.OrderService.API.csproj" />
-    <ProjectReference Include="..\EcoFleet.AssignmentService.API\EcoFleet.AssignmentService.API.csproj" />
-    <ProjectReference Include="..\EcoFleet.NotificationService.API\EcoFleet.NotificationService.API.csproj" />
-    <ProjectReference Include="..\EcoFleet.ApiGateway\EcoFleet.ApiGateway.csproj" />
+    <ProjectReference Include="..\EcoFleet.DriverService.API\EcoFleet.DriverService.API.csproj" IsAspireProjectResource="true" />
+    <ProjectReference Include="..\EcoFleet.FleetService.API\EcoFleet.FleetService.API.csproj" IsAspireProjectResource="true" />
+    <ProjectReference Include="..\EcoFleet.ManagerService.API\EcoFleet.ManagerService.API.csproj" IsAspireProjectResource="true" />
+    <ProjectReference Include="..\EcoFleet.OrderService.API\EcoFleet.OrderService.API.csproj" IsAspireProjectResource="true" />
+    <ProjectReference Include="..\EcoFleet.AssignmentService.API\EcoFleet.AssignmentService.API.csproj" IsAspireProjectResource="true" />
+    <ProjectReference Include="..\EcoFleet.NotificationService.API\EcoFleet.NotificationService.API.csproj" IsAspireProjectResource="true" />
+    <ProjectReference Include="..\EcoFleet.ApiGateway\EcoFleet.ApiGateway.csproj" IsAspireProjectResource="true" />
   </ItemGroup>
 
 </Project>

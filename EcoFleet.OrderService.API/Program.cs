@@ -6,6 +6,7 @@ using JasperFx.Events.Projections;
 using Marten;
 using Marten.Events.Projections;
 using MassTransit;
+using RabbitMQ.Client;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,7 +56,10 @@ builder.Services.AddOpenApi();
 // 7. Health Checks
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("EventStore")!, name: "postgres")
-    .AddRabbitMQ(builder.Configuration.GetConnectionString("RabbitMQ")!, name: "rabbitmq");
+    .AddRabbitMQ(sp => new ConnectionFactory
+    {
+        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!)
+    }.CreateConnectionAsync().GetAwaiter().GetResult(), name: "rabbitmq");
 
 var app = builder.Build();
 

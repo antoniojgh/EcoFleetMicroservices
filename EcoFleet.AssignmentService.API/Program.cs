@@ -2,6 +2,7 @@ using EcoFleet.AssignmentService.API.Middlewares;
 using EcoFleet.AssignmentService.Application;
 using EcoFleet.AssignmentService.Infrastructure;
 using MassTransit;
+using RabbitMQ.Client;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,7 +42,10 @@ builder.Services.AddOpenApi();
 // 6. Health Checks
 builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("AssignmentDb")!)
-    .AddRabbitMQ(builder.Configuration.GetConnectionString("RabbitMQ")!);
+    .AddRabbitMQ(sp => new ConnectionFactory
+    {
+        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!)
+    }.CreateConnectionAsync().GetAwaiter().GetResult());
 
 var app = builder.Build();
 
