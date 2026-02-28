@@ -1,6 +1,7 @@
 using EcoFleet.DriverService.API.Middlewares;
 using EcoFleet.DriverService.Application;
 using EcoFleet.DriverService.Infrastructure;
+using EcoFleet.DriverService.Infrastructure.Persistence;
 using EcoFleet.DriverService.Infrastructure.Projections;
 using JasperFx.Events.Projections;
 using Marten;
@@ -39,7 +40,7 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ"));
+        cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
         cfg.ConfigureEndpoints(context);
     });
 });
@@ -53,7 +54,7 @@ builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("DriverDb")!)
     .AddRabbitMQ(sp => new ConnectionFactory
     {
-        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!)
+        Uri = new Uri(builder.Configuration.GetConnectionString("rabbitmq")!)
     }.CreateConnectionAsync().GetAwaiter().GetResult());
 
 var app = builder.Build();
@@ -64,5 +65,12 @@ app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Ensure SQL Server database schema is created (no migration files needed)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<DriverDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 app.Run();

@@ -1,6 +1,7 @@
 using EcoFleet.ManagerService.API.Middlewares;
 using EcoFleet.ManagerService.Application;
 using EcoFleet.ManagerService.Infrastructure;
+using EcoFleet.ManagerService.Infrastructure.Persistence;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,5 +31,12 @@ app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Ensure SQL Server database schema is created (no migration files needed)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ManagerDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 app.Run();

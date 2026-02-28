@@ -1,6 +1,7 @@
 using EcoFleet.FleetService.API.Middlewares;
 using EcoFleet.FleetService.Application;
 using EcoFleet.FleetService.Infrastructure;
+using EcoFleet.FleetService.Infrastructure.Persistence;
 using EcoFleet.FleetService.Infrastructure.Projections;
 using JasperFx.Events.Projections;
 using Marten;
@@ -38,7 +39,7 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ"));
+        cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
 
         // Enable retries with incremental backoff
         cfg.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
@@ -56,7 +57,7 @@ builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("FleetDb")!)
     .AddRabbitMQ(sp => new ConnectionFactory
     {
-        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!)
+        Uri = new Uri(builder.Configuration.GetConnectionString("rabbitmq")!)
     }.CreateConnectionAsync().GetAwaiter().GetResult());
 
 var app = builder.Build();
@@ -67,5 +68,12 @@ app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Ensure SQL Server database schema is created (no migration files needed)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<FleetDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 app.Run();

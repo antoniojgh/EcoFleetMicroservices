@@ -40,7 +40,7 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ"));
+        cfg.Host(builder.Configuration.GetConnectionString("rabbitmq"));
 
         // Enable retries with incremental backoff
         cfg.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2)));
@@ -58,7 +58,7 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("EventStore")!, name: "postgres")
     .AddRabbitMQ(sp => new ConnectionFactory
     {
-        Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMQ")!)
+        Uri = new Uri(builder.Configuration.GetConnectionString("rabbitmq")!)
     }.CreateConnectionAsync().GetAwaiter().GetResult(), name: "rabbitmq");
 
 var app = builder.Build();
