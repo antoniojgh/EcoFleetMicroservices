@@ -1,0 +1,156 @@
+services:
+  # Infrastructure
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ecofleet_events
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "YourStrong!Password123"
+      ACCEPT_EULA: "Y"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Password123' -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservices
+  driver-service:
+    build:
+      context: .
+      dockerfile: EcoFleet.DriverService.API/Dockerfile
+    ports:
+      - "5101:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DriverDb=Server=sqlserver;Database=EcoFleet_DriverDb;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=true;
+      - ConnectionStrings__EventStore=Host=postgres;Database=ecofleet_events;Username=postgres;Password=postgres
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+
+  fleet-service:
+    build:
+      context: .
+      dockerfile: EcoFleet.FleetService.API/Dockerfile
+    ports:
+      - "5102:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__FleetDb=Server=sqlserver;Database=EcoFleet_FleetDb;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=true;
+      - ConnectionStrings__EventStore=Host=postgres;Database=ecofleet_events;Username=postgres;Password=postgres
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+
+  manager-service:
+    build:
+      context: .
+      dockerfile: EcoFleet.ManagerService.API/Dockerfile
+    ports:
+      - "5103:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ManagerDb=Server=sqlserver;Database=EcoFleet_ManagerDb;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=true;
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: .
+      dockerfile: EcoFleet.OrderService.API/Dockerfile
+    ports:
+      - "5104:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__OrderDb=Server=sqlserver;Database=EcoFleet_OrderDb;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=true;
+      - ConnectionStrings__EventStore=Host=postgres;Database=ecofleet_events;Username=postgres;Password=postgres
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+
+  assignment-service:
+    build:
+      context: .
+      dockerfile: EcoFleet.AssignmentService.API/Dockerfile
+    ports:
+      - "5105:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__AssignmentDb=Server=sqlserver;Database=EcoFleet_AssignmentDb;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=true;
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: EcoFleet.NotificationService.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: EcoFleet.ApiGateway/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - driver-service
+      - fleet-service
+      - manager-service
+      - order-service
+      - assignment-service
