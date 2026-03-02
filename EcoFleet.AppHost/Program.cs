@@ -2,12 +2,15 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // Infrastructure
 var rabbitMq = builder.AddRabbitMQ("rabbitmq")
-    .WithManagementPlugin();
+    .WithManagementPlugin()
+    .WithDataVolume();
 
-var postgres = builder.AddPostgres("postgres");
+var postgres = builder.AddPostgres("postgres")
+    .WithDataVolume();
 var eventsDb = postgres.AddDatabase("EventStore");
 
-var sqlServer = builder.AddSqlServer("sqlserver");
+var sqlServer = builder.AddSqlServer("sqlserver")
+    .WithDataVolume();
 var driverDb = sqlServer.AddDatabase("DriverDb");
 var fleetDb = sqlServer.AddDatabase("FleetDb");
 var managerDb = sqlServer.AddDatabase("ManagerDb");
