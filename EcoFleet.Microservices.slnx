@@ -39,7 +39,6 @@
   </Folder>
   <Folder Name="/src/Services/NotificationService/">
     <Project Path="EcoFleet.NotificationService.API/EcoFleet.NotificationService.API.csproj" />
-    <Project Path="EcoFleet.NotificationService.Application/EcoFleet.NotificationService.Application.csproj" />
   </Folder>
   <Folder Name="/src/Services/OrderService/">
     <Project Path="EcoFleet.OrderService.API/EcoFleet.OrderService.API.csproj" />
